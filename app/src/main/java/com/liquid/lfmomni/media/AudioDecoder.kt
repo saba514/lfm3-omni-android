@@ -83,7 +83,9 @@ object AudioDecoder {
         }
 
         val timeoutUs = 10_000L
+        var idleCount = 0
         while (!outputDone) {
+            var progressed = false
             if (!inputDone) {
                 val inIndex = codec.dequeueInputBuffer(timeoutUs)
                 if (inIndex >= 0) {
@@ -96,6 +98,7 @@ object AudioDecoder {
                         codec.queueInputBuffer(inIndex, 0, sampleSize, extractor.sampleTime, 0)
                         extractor.advance()
                     }
+                    progressed = true
                 }
             }
 
@@ -113,7 +116,8 @@ object AudioDecoder {
                     if (durationUs > 0) {
                         onProgress?.invoke((info.presentationTimeUs.toFloat() / durationUs).coerceIn(0f, 1f))
                     }
-                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) outputDone = true
+                    if ((info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) outputDone = true
+                    progressed = true
                 }
 
                 outIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
@@ -123,10 +127,15 @@ object AudioDecoder {
                 }
 
                 outIndex == MediaCodec.INFO_TRY_AGAIN_LATER -> {
-                    if (inputDone && pcm.isEmpty()) {
-                        // それ以上出力がない
-                    }
+                    if (inputDone) idleCount++ else idleCount = 0
                 }
+            }
+            if (!progressed && inputDone) {
+                idleCount++
+            }
+            // デコーダが何も返さなくなったら抜ける (無限ループ防止)
+            if (idleCount > 300) {
+                outputDone = true
             }
         }
 

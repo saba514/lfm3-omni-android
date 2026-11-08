@@ -1,5 +1,13 @@
 # LFM3 Omni Local for Android
 
+## 0. このリポジトリの CI について (重要)
+
+`.github/workflows/build-apk.yml` の内容は `ci/build-apk.yml` に置いてあります。
+Pickle (GitHub App) に Workflows 権限が無いため、アプリから `.github/workflows/` へ直接コミットできませんでした。
+`ci/README.md` の手順 (権限付与、または Web UI からの追加) で有効化すると、push を契機に APK がビルドされます。
+
+---
+
 Liquid AI のマルチモーダルモデル **LFM3-Omni-2B** を、Android 端末の上だけで動かすアプリです。
 テキスト・画像・音声・動画を 1 つのモデルに入力し、テキストで答えます。クラウド API は使いません。
 
