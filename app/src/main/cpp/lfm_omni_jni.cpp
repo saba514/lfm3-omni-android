@@ -163,8 +163,8 @@ Java_com_liquid_lfmomni_engine_LfmOmniNative_loadModel(JNIEnv * env, jobject /*t
                                                        jint n_ctx,
                                                        jint n_threads,
                                                        jint n_batch) {
+    g.abort_flag = true; // 直前の推論を止める (ロック取得前に立てる)
     std::lock_guard<std::mutex> lock(g.mutex);
-    g.abort_flag = true; // 直前の推論を止める
     release_all();
     g.abort_flag = false;
 
@@ -240,8 +240,8 @@ Java_com_liquid_lfmomni_engine_LfmOmniNative_loadModel(JNIEnv * env, jobject /*t
 
 JNIEXPORT void JNICALL
 Java_com_liquid_lfmomni_engine_LfmOmniNative_unloadModel(JNIEnv * /*env*/, jobject /*thiz*/) {
-    std::lock_guard<std::mutex> lock(g.mutex);
     g.abort_flag = true;
+    std::lock_guard<std::mutex> lock(g.mutex);
     release_all();
     LOGI("model unloaded");
 }
